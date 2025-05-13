@@ -1,0 +1,15 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+path="res://.import/coin-recieved-230517.mp3-6d2546d87b9bfd6fb3b6a24994795afb.mp3str"
+
+[deps]
+
+source_file="res://assets/coins/coin-recieved-230517.mp3"
+dest_files=[ "res://.import/coin-recieved-230517.mp3-6d2546d87b9bfd6fb3b6a24994795afb.mp3str" ]
+
+[params]
+
+loop=true
+loop_offset=0
