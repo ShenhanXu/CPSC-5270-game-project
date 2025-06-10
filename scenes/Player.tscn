@@ -1,12 +1,13 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=11 format=2]
 
 [ext_resource path="res://assets/character/player.png" type="Texture" id=1]
 [ext_resource path="res://scripts/Player.gd" type="Script" id=2]
+[ext_resource path="res://assets/Default/bar_square_gloss_small.png" type="Texture" id=3]
 
 [sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 29, 30 )
 
-[sub_resource type="Animation" id=5]
+[sub_resource type="Animation" id=2]
 resource_name = "die"
 length = 0.6
 tracks/0/type = "value"
@@ -34,8 +35,47 @@ tracks/1/keys = {
 "values": [ Vector2( 1, 1 ), Vector2( 0, 0 ) ]
 }
 
-[sub_resource type="Animation" id=2]
-resource_name = "idle"
+[sub_resource type="Animation" id=3]
+resource_name = "flash"
+length = 0.6
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:self_modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.2, 0.4 ),
+"transitions": PoolRealArray( 1, 1, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 1 ), Color( 1, 0, 0, 1 ), Color( 1, 1, 1, 1 ) ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("Sprite:visible")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 0.1, 0.2, 0.4, 0.6 ),
+"transitions": PoolRealArray( 1, 1, 1, 1, 1 ),
+"update": 1,
+"values": [ true, false, true, false, true ]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath(".:collision_layer")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PoolRealArray( 0, 0.6 ),
+"transitions": PoolRealArray( 1, 1 ),
+"update": 1,
+"values": [ 4, 1 ]
+}
+
+[sub_resource type="Animation" id=4]
 tracks/0/type = "value"
 tracks/0/path = NodePath("Sprite:frame")
 tracks/0/interp = 1
@@ -49,8 +89,7 @@ tracks/0/keys = {
 "values": [ 0 ]
 }
 
-[sub_resource type="Animation" id=3]
-resource_name = "jump"
+[sub_resource type="Animation" id=5]
 tracks/0/type = "value"
 tracks/0/path = NodePath("Sprite:frame")
 tracks/0/interp = 1
@@ -64,8 +103,7 @@ tracks/0/keys = {
 "values": [ 1 ]
 }
 
-[sub_resource type="Animation" id=4]
-resource_name = "walk"
+[sub_resource type="Animation" id=6]
 length = 0.4
 loop = true
 tracks/0/type = "value"
@@ -81,6 +119,9 @@ tracks/0/keys = {
 "values": [ 2, 3 ]
 }
 
+[sub_resource type="RectangleShape2D" id=7]
+extents = Vector2( 50.5, 44.5 )
+
 [node name="Player" type="KinematicBody2D"]
 script = ExtResource( 2 )
 
@@ -95,10 +136,11 @@ position = Vector2( 0, 17 )
 shape = SubResource( 1 )
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
-anims/die = SubResource( 5 )
-anims/idle = SubResource( 2 )
-anims/jump = SubResource( 3 )
-anims/walk = SubResource( 4 )
+anims/die = SubResource( 2 )
+anims/flash = SubResource( 3 )
+anims/idle = SubResource( 4 )
+anims/jump = SubResource( 5 )
+anims/walk = SubResource( 6 )
 
 [node name="CoyoteTimer" type="Timer" parent="."]
 wait_time = 0.1
@@ -112,4 +154,22 @@ one_shot = true
 position = Vector2( -0.500002, 14 )
 scale = Vector2( 3.35, 3.5 )
 
+[node name="SlideBox" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SlideBox"]
+position = Vector2( 0.5, 11.5 )
+shape = SubResource( 7 )
+disabled = true
+
+[node name="HealthBar" type="TextureProgress" parent="."]
+margin_left = -48.0
+margin_top = -45.0
+margin_right = 48.0
+margin_bottom = -29.0
+max_value = 3.0
+value = 3.0
+texture_progress = ExtResource( 3 )
+
 [connection signal="screen_exited" from="VisibilityNotifier2D" to="." method="_on_VisibilityNotifier2D_screen_exited"]
+[connection signal="area_entered" from="SlideBox" to="." method="_on_SlideBox_area_entered"]
+[connection signal="body_entered" from="SlideBox" to="." method="_on_SlideBox_body_entered"]

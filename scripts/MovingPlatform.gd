@@ -1,8 +1,8 @@
 extends KinematicBody2D
 
-export var move_to = Vector2.ZERO 
+export var move_to = Vector2.ZERO  
 export var speed = 100.0          
-export var wait_time = 1.0        
+export var wait_time = 1.0      
 
 var start_position = Vector2.ZERO
 var target_position = Vector2.ZERO

@@ -1,0 +1,59 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://scenes/World.tres" type="DynamicFont" id=1]
+[ext_resource path="res://assets/font/LazyFox Pixel Font 7.ttf" type="DynamicFontData" id=2]
+[ext_resource path="res://scenes/EndScene.gd" type="Script" id=3]
+
+[sub_resource type="DynamicFont" id=1]
+size = 31
+outline_size = 4
+outline_color = Color( 0, 0, 0, 1 )
+font_data = ExtResource( 2 )
+
+[node name="EndScene" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 3 )
+
+[node name="Label" type="Label" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -206.0
+margin_top = -187.0
+margin_right = 102.0
+margin_bottom = -145.0
+custom_fonts/font = ExtResource( 1 )
+text = "Your Score :"
+
+[node name="Button" type="Button" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -104.0
+margin_top = -24.0
+margin_right = 104.0
+margin_bottom = 24.0
+custom_fonts/font = SubResource( 1 )
+shortcut_in_tooltip = false
+text = "Restart"
+clip_text = true
+
+[node name="Button2" type="Button" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -104.0
+margin_top = 41.0
+margin_right = 104.0
+margin_bottom = 89.0
+custom_fonts/font = SubResource( 1 )
+shortcut_in_tooltip = false
+text = "Exit"
+clip_text = true
+
+[connection signal="pressed" from="Button" to="." method="_on_Button_pressed"]
+[connection signal="pressed" from="Button2" to="." method="_on_Button2_pressed"]
