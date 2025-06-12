@@ -21,10 +21,15 @@ var slide_damage_cooldown_time = 1.5  # Slide damage cooldown time is longer
 var is_hurt = false  # Whether Boss is in hurt state
 var hurt_timer = 0.0  # Hurt state timer
 
+# Death shader material
+var death_material = null
+
 func _ready():
 	add_to_group("enemies")
 	# Find player node
 	player = get_parent().get_node("Player")
+
+	death_material = preload("res://materials/boss_die_materials.tres")
 
 func _physics_process(delta):
 	if player == null or not is_physics_processing():
@@ -60,10 +65,11 @@ func _physics_process(delta):
 	match state:
 		"idle":
 			$Sprite.play("idle")
-			# In idle state, slowly move towards player
+			# In idle state, always move towards player (增强跟随)
 			if distance_to_player < detection_range:
 				var direction = (player.global_position - global_position).normalized()
 				velocity = direction * speed
+				print("Boss following player - Distance: ", distance_to_player)  # 调试信息
 				
 				# Choose attack method
 				if attack_cooldown <= 0:
@@ -75,7 +81,10 @@ func _physics_process(delta):
 						start_spike_attack()
 					attack_cooldown = 3.0  # 3 second cooldown
 			else:
-				velocity = Vector2.ZERO
+				# 即使超出检测范围也跟随（可选）
+				var direction = (player.global_position - global_position).normalized()
+				velocity = direction * speed * 0.5  # 慢速跟随
+				print("Boss slow following - Distance: ", distance_to_player)
 				
 		"dash_attack":
 			if is_dashing:
@@ -201,40 +210,102 @@ func take_damage(amount):
 			is_hurt = true
 			hurt_timer = 0.5  # Hurt state lasts 0.5 seconds
 			print("Boss knocked back away from player")
-			# Note: We no longer rely on HurtTimer node, using built-in timer instead
 
-# Death
+# Death - 新的死亡效果
 func die():
-	print("Boss dies! Switching to victory scene...")
-	# Ensure Boss cannot take damage again
+	print("Boss dies! Starting death animation...")
+	# 确保Boss不能再受到伤害
 	set_physics_process(false)
-	# Can add death animation, drop items, etc.
-	yield(get_tree().create_timer(0.5), "timeout")  # Slight delay
+	
+	# 应用死亡shader效果
+	apply_death_effect()
+
+# 新的死亡效果函数
+func apply_death_effect():
+	# 应用shader材质
+	var shader_instance = death_material.duplicate()
+	$Sprite.material = shader_instance
+	
+	# 创建Tween控制死亡动画
+	var tween = Tween.new()
+	add_child(tween)
+	
+	# 死亡进度动画 (0到1，持续2秒)
+	tween.interpolate_method(self, "_update_death_progress", 0.0, 1.0, 2.0, Tween.TRANS_CUBIC, Tween.EASE_IN)
+	
+	# 缩放效果 - 先放大再缩小
+	tween.interpolate_property($Sprite, "scale", Vector2(0.5, 0.5), Vector2(0.8, 0.8), 0.5, Tween.TRANS_BACK, Tween.EASE_OUT)
+	tween.interpolate_property($Sprite, "scale", Vector2(0.8, 0.8), Vector2(0.2, 0.2), 1.5, Tween.TRANS_CUBIC, Tween.EASE_IN, 0.5)
+	
+	# 旋转效果 - 两圈旋转
+	tween.interpolate_property($Sprite, "rotation_degrees", 0, 720, 2.0, Tween.TRANS_CUBIC, Tween.EASE_IN)
+	
+	# 轻微上升效果
+	var current_pos = global_position
+	var target_pos = current_pos + Vector2(0, -50)
+	tween.interpolate_property(self, "global_position", current_pos, target_pos, 1.0, Tween.TRANS_CUBIC, Tween.EASE_OUT)
+	
+	# 添加屏幕震动
+	add_screen_shake()
+	
+	# 动画完成后切换场景
+	tween.connect("tween_all_completed", self, "_on_death_animation_finished")
+	tween.start()
+	
+	# 可以添加死亡音效
+	# $DeathSound.play()
+
+func _update_death_progress(progress):
+	# 更新shader的死亡进度参数
+	if $Sprite.material:
+		$Sprite.material.set_shader_param("death_progress", progress)
+
+func add_screen_shake():
+	# 获取摄像机
+	var camera = get_node("../Player/Camera2D")
+	if camera == null:
+		return
+	
+	# 创建震动Tween
+	var shake_tween = Tween.new()
+	add_child(shake_tween)
+	
+	# 震动效果 - 15次震动，每次0.05秒
+	for i in range(15):
+		var shake_offset = Vector2(
+			rand_range(-8, 8),
+			rand_range(-8, 8)
+		)
+		var delay = i * 0.1  # 每0.1秒一次震动
+		
+		shake_tween.interpolate_property(
+			camera, "offset",
+			camera.offset, shake_offset,
+			0.05, Tween.TRANS_CUBIC, Tween.EASE_OUT, delay
+		)
+		
+		shake_tween.interpolate_property(
+			camera, "offset",
+			shake_offset, Vector2.ZERO,
+			0.05, Tween.TRANS_CUBIC, Tween.EASE_IN, delay + 0.05
+		)
+	
+	shake_tween.start()
+
+func _on_death_animation_finished():
+	print("Boss death animation completed! Switching to victory scene...")
 	queue_free()
-	# Try multiple scene paths
+	# 切换到胜利场景
 	if ResourceLoader.exists("res://scenes/WinScene.tscn"):
 		get_tree().change_scene("res://scenes/WinScene.tscn")
 	elif ResourceLoader.exists("res://scenes/Victory.tscn"):
 		get_tree().change_scene("res://scenes/Victory.tscn")
-	elif ResourceLoader.exists("res://scenes/Win.tscn"):
-		get_tree().change_scene("res://scenes/Win.tscn")
+	elif ResourceLoader.exists("res://scenes/win.tscn"):
+		get_tree().change_scene("res://scenes/win.tscn")
 	else:
 		print("Victory scene not found, returning to main menu")
-		get_tree().change_scene("res://scenes/MainMenu.tscn")
+		get_tree().change_scene("res://scenes/StartScene.tscn")
 
 # Hurt timer timeout handler
 func _on_HurtTimer_timeout():
 	state = "idle"  # Return to idle state
-
-# Disable Area2D collision detection to avoid duplicate damage
-# If your Boss scene has Area2D nodes, please delete or disconnect these signal connections
-
-# func _on_Area2D_body_entered(body):
-#     # Disabled, only use distance detection
-
-# func _on_Area2D_area_entered(area):
-#     # Disabled, only use distance detection
-
-# Add this method to player script to receive knockback
-# func apply_knockback(force):
-#     velocity += force

@@ -1,30 +1,21 @@
-extends KinematicBody2D
+extends MovementBase
 
-export var move_to = Vector2.ZERO  
-export var speed = 100.0          
-export var wait_time = 1.0      
+# Platform-specific properties
+export var move_to: Vector2 = Vector2.ZERO
 
-var start_position = Vector2.ZERO
-var target_position = Vector2.ZERO
-var moving_to_target = true
-var wait_timer = 0.0
+# Platform-specific state
+var start_position: Vector2
+var target_position: Vector2
+var moving_to_target: bool = true
 
-func _ready():
-	start_position = position
-	target_position = position + move_to
+# Only implement the abstract methods
+func initialize_movement():
+	start_position = global_position
+	target_position = start_position + move_to
 
-func _physics_process(delta):
-	if wait_timer > 0:
-		wait_timer -= delta
-		return
-	
-	var target = target_position if moving_to_target else start_position
-	var direction = (target - position).normalized()
-	var velocity = direction * speed
-	
-	if position.distance_to(target) < speed * delta:
-		position = target
-		moving_to_target = !moving_to_target
-		wait_timer = wait_time
-	else:
-		position += velocity * delta
+func get_current_target() -> Vector2:
+	return target_position if moving_to_target else start_position
+
+func on_target_reached():
+	moving_to_target = !moving_to_target
+	start_waiting()
