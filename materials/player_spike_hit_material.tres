@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=2]
+
+[ext_resource path="res://shader/player_spike_hit.shader" type="Shader" id=1]
+
+[resource]
+shader = ExtResource( 1 )
+shader_param/hit_intensity = 0.0
+shader_param/distortion_strength = 0.03
+shader_param/hit_color = Color( 0.8, 0.2, 0.2, 1 )
+shader_param/flash_speed = 15.0
+shader_param/edge_glow = 0.1
